@@ -1,0 +1,160 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tonevalue}
+  [2021/07/25 v1.0 LaTeX Package (Tone value: visualising tone value patterns)]
+
+\RequirePackage{etoolbox}
+\RequirePackage{listofitems}
+\RequirePackage{xstring}
+\RequirePackage{xkeyval}
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+  \usetikzlibrary{positioning,decorations.markings,arrows}
+\RequirePackage{contour}
+
+% package options
+  % font command
+  \DeclareOptionX{fontcmd}[\sffamily]{\def\toneVisualisationFontCmd{#1}}
+  % colors
+  \DeclareOptionX{defaultcolors}{
+    \definecolor{1}{HTML}{7E2639}
+    \definecolor{2}{HTML}{FF98AF}
+    \definecolor{3}{HTML}{AD724A}
+    \definecolor{4}{HTML}{DE6A1C}
+    \definecolor{5}{HTML}{426579}
+    \definecolor{6}{HTML}{86B8F3}
+    \definecolor{7}{HTML}{769164}
+    \definecolor{8}{HTML}{ACC551}
+  }
+  % contour around numbers
+  \DeclareOptionX{draft}{\contournumber{50}}
+  \DeclareOptionX{contourlength}[0.075em]{\contourlength{#1}}
+  \DeclareOptionX{contournumber}[1000]{\contournumber{#1}}
+\ExecuteOptionsX{
+  contourlength=0.075em,
+  contournumber=1000,
+  fontcmd=\sffamily,
+}
+\ProcessOptionsX*\relax
+\ProcessOptionsX\relax
+
+\def\xjoinbycomma<#1#2>{%
+  \ifx\relax#1
+  \else
+    #1,\xjoinbycomma<#2>%
+  \fi
+}
+\def\sendiauToListStr#1{\xjoinbycomma<#1\relax>}
+
+% environment for unt's visualisation approach
+\define@key{untVisualisation}{minmax}{\def\untVisualisation@minmax{#1}}
+\define@key{untVisualisation}{scale}{\def\untVisualisation@scale{#1}}
+\define@key{untVisualisation}{showlabels}{\def\untVisualisation@showlabels{#1}}
+\newenvironment{untVisualisation}[1][]{
+  \setkeys{untVisualisation}{minmax={1,5}, scale=1, showlabels=false}
+  \setkeys{untVisualisation}{#1}
+  \toneVisualisationFontCmd
+  % mxn minmax
+  \pgfmathparse{{\untVisualisation@minmax}[0]}
+  \edef\xstart{\pgfmathresult}
+  \pgfmathparse{{\untVisualisation@minmax}[1]}
+  \edef\xend{\pgfmathresult}
+  \pgfmathparse{{\untVisualisation@minmax}[0]}
+  \edef\ystart{\pgfmathresult}
+  \pgfmathparse{{\untVisualisation@minmax}[1]}
+  \edef\yend{\pgfmathresult}
+  \tikzpicture[scale=\untVisualisation@scale]
+    \begin{scope}[rotate=45, scale=1.4142, line width=0.1em, gray]
+      \foreach \x in {\xstart,...,\xend}
+        \draw (\x,\ystart) -- (\x,\yend);
+      \foreach \y in {\ystart,...,\yend}
+        \draw (\xstart,\y) -- (\xend,\y);
+    \end{scope}
+    \begin{scope}[gray]
+      \expandafter\ifstrequal\expandafter{\untVisualisation@showlabels}{true}{
+        \node at (0,\ystart*2-0.5) {\large\bfseries\xstart};
+        \node at (-\xend+0.6767+\xstart-1,\yend+0.6767+\ystart-1) {\large\bfseries\xend};
+        \node at (\xend-0.6767-\xstart+1,\yend+0.6767+\ystart-1) {\large\bfseries\xend};
+        \node (xAxisArrowTip) at (-\xend+0.6767+\xstart-1+\xend/2-\xstart/2,\yend+0.6767+\ystart-1-\yend/2+\ystart/2) {};
+        \node[below left=1.25em of xAxisArrowTip] (xAxisArrowTail) {};
+        \draw[line width=0.125em, -angle 60] (xAxisArrowTail) -- (xAxisArrowTip);
+        \node (yAxisArrowTail) at (\xend-0.6767-\xstart+1-\xend/2+\xstart/2,\yend+0.6767+\ystart-1-\yend/2+\ystart/2) {};
+        \node[below right=1.25em of yAxisArrowTail] (yAxisArrowTip) {};
+        \draw[line width=0.125em, -angle 60] (yAxisArrowTail) -- (yAxisArrowTip);
+      }{}
+    \end{scope}
+}{
+  \endtikzpicture
+}
+
+% draw a point
+\newcommand{\drawuntpoint}[9][]{
+  % override tikz options, background color, coordinates, tone name, tone value in numbers, label position
+    \node[draw, shape=circle, scale=#9*0.75, inner sep=0.1em, fill, #2, text=white, #1, xshift=#7, yshift=#8]
+    ({#5}{#4})
+    at ({#3}[0],{#3}[1])
+    {#4};
+  \node[#2, #6 = 0pt of {#5}{#4}] {\contour{white}{#5}};
+}
+
+\newcounter{sumOfPitchHeights}
+% keys of options
+\define@key{untpoint}{label}{\def\untpoint@label{#1}}
+\define@key{untpoint}{tikzoptions}{\def\untpoint@tikzoptions{#1}}
+\define@key{untpoint}{bgcolor}{\def\untpoint@bgcolor{#1}}
+\define@key{untpoint}{xshift}{\def\untpoint@xshift{#1}}
+\define@key{untpoint}{yshift}{\def\untpoint@yshift{#1}}
+\define@key{untpoint}{scale}{\def\untpoint@scale{#1}}
+\define@key{untpoint}{stem}{\def\untpoint@stem{#1}}
+% drawing interface
+\newcommand{\untpoint}[3][]{
+  % options, tone value in numbers, tone name
+  \setkeys{untpoint}{label=above, tikzoptions={}, bgcolor=black, xshift=0pt, yshift=0pt, scale=1, stem=false}
+  \setkeys{untpoint}{#1}
+
+  \StrGobbleRight{\sendiauToListStr{#2}}{2}[\sendiaulistStr] % readlist cannot parse trailing comma
+  \readlist\sendiaulist{\sendiaulistStr}
+  \edef\len{\listlen\sendiaulist[]}
+
+  \ifnum0\len=1
+    \drawuntpoint[{\untpoint@tikzoptions}]{\untpoint@bgcolor}{0,{#2}[0]*2}{#3}{#2}
+      {\untpoint@label}{\untpoint@xshift}{\untpoint@yshift}{\untpoint@scale}
+  \else
+    \setcounter{sumOfPitchHeights}{0}
+    \pgfmathparse{\len-2}
+    % calculate the sum of pitch heights
+    \foreach \pitchHeightIndex in {0,...,{\pgfmathresult}} {
+      \pgfmathparse{{#2}[\pitchHeightIndex]}
+      \addtocounter{sumOfPitchHeights}{\pgfmathresult}
+      \pgfmathparse{{#2}[\pitchHeightIndex+1]}
+      \addtocounter{sumOfPitchHeights}{\pgfmathresult}
+    }
+    % draw the point
+    \drawuntpoint[\untpoint@tikzoptions]
+      {\untpoint@bgcolor}
+      {{-({#2}[0])+{#2}[\len-1]},{\thesumOfPitchHeights/(\len-1)}}
+      {#3}{#2}
+      {\untpoint@label}{\untpoint@xshift}{\untpoint@yshift}{\untpoint@scale}
+    % draw the stem
+    \expandafter\ifstrequal\expandafter{\untpoint@stem}{true}{
+      \draw[\untpoint@bgcolor, line width=0.1em] ({-({#2}[0])+{#2}[\len-1]},{#2}[0]+{#2}[\len-1]) -- ({#2}{#3});
+    }{}
+  \fi
+}
+
+% link points
+\define@key{linkuntpoints}{color}{\def\linkuntpoints@color{#1}}
+\define@key{linkuntpoints}{bend}{\def\linkuntpoints@bend{#1}}
+\newcommand{\linkuntpoints}[3][]{
+  \setkeys{linkuntpoints}{color=black, bend={}}
+  \setkeys{linkuntpoints}{#1}
+
+  \begin{scope}[
+      decoration={
+        markings,
+        mark=at position 0.5 with {\arrow[scale=0.875]{angle 60}}}
+    ]
+    \draw[postaction={decorate}, line width=0.15em, \linkuntpoints@color] (#2) to [\linkuntpoints@bend] (#3);
+  \end{scope}
+}
+
+\endinput

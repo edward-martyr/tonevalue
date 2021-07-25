@@ -1,0 +1,320 @@
+% !TEX program = xelatex
+
+\RequirePackage{xcolor}
+
+\documentclass{ltxdockit}
+\makeatletter
+  \def\@seccntformat#1{\protect\makebox[0pt][r]{\csname the#1\endcsname\hspace{\marglistsep}}}
+\makeatother
+
+\usepackage{xltxtra}
+
+\usepackage[defaultcolors]{tonevalue}
+
+\usepackage{cleveref}
+
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily,
+  frame=single,
+  columns=flexible,
+  language=[LaTeX]TeX,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{spot}{$\hookrightarrow$}\space},
+  morekeywords={drawuntpoint,untpoint,linkuntpoints},
+  escapeinside={<@}{@>},
+}
+
+\usepackage{xeCJK}
+\setCJKmainfont[Script=CJK, Scale=0.9]{Source Han Serif K}
+\newCJKfontfamily\simplified[Script=CJK, Language=Chinese Simplified, Scale=0.9]{Source Han Serif K}
+\setmainfont[Script=Latin]{Minion 3}
+\setCJKsansfont[Script=CJK, Scale=0.9]{Source Han Sans K}
+\setsansfont[Script=Latin]{Myriad Pro}
+\setCJKmonofont[Script=CJK, Scale=0.9]{Sarasa Mono K}
+\setmonofont[Script=Latin, Scale=0.9]{Sarasa Mono K}
+
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{microtype}
+
+\newcommand{\colourcirc}[1]{\tikz{\node[draw, shape=circle, scale=0.9, inner sep=0.1em, fill, #1, text=white] {\sffamily #1};}}
+\newcommand{\showcolour}[2]{{\raisebox{-0.2em}{\colourcirc{#1}} \sffamily\textcolor{#1}{#2}}}
+
+\makeatletter
+\def\blfootnote{\gdef\@thefnmark{}\@footnotetext}
+\makeatother
+
+\title{The \texttt{tonevalue} package}
+\author{Yuanhao Chen}
+\date{\today{\quad}v1.0}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+This package provides a \sty{tikz}-based solution to typeset visualisations of tone vales. In this version (v1.0), unt's model\footnote{\simplified unt. 一种直观的调值格局可视化方法 (A Novel Approach to Visualization of Tone Value Pattern). 第十四届中国语音学学术会议 (The 14th Phonetic Association of China). July 2021.} is implemented. Support for more models is planned.
+
+\section{User Interface}
+
+\subsection{Basic Usage}
+Put in your preamble
+\begin{lstlisting}
+\usepackage<@\oprm{\sty{tonevalue} options}@>{tonevalue}
+\end{lstlisting}
+then after \lstinline|\begin{document}|, use
+\begin{lstlisting}
+\begin{<@\prm{name of visualisation environment}@>}[<@\prm{visualisation environment options}@>]
+  \<@\prm{name of drawing command}@>[<@\prm{drawing options}@>]{<@\prm{tone value}@>}{<@\prm{name of tone}@>}
+\end{<@\prm{name of visualisation environment}@>}
+\end{lstlisting}
+
+\subsection{A Brief Working Example}
+An example of complete working code looks like
+\begin{lstlisting}[caption={basic example.}]
+\documentclass{article}
+
+% load the package, and use the predefined color set
+\usepackage[defaultcolors]{tonevalue}
+
+\begin{document}
+
+% set showlabels to true
+% set range of tone values to 1 to 4
+% set scale of graph to 0.8
+\begin{untVisualisation}[showlabels=true, minmax={1,4}, scale=0.8]
+  % T1
+  \untpoint[bgcolor=1, label=left]{312}{T1}
+  \untpoint[bgcolor=1]{33}{T1}
+  % change in tone value
+  \linkuntpoints[color=1, bend=bend right]{{312}{T1}}{{33}{T1}}
+\end{untVisualisation}
+
+\end{document}
+\end{lstlisting}
+with the result
+\begin{figure}[htb]
+  \centering
+  % set showlabels to true
+  % set range of tone values to 1 to 4
+  % set scale of graph to 0.8
+  \begin{untVisualisation}[showlabels=true, minmax={1,4}, scale=0.8]
+    % T1
+    \untpoint[bgcolor=1, label=left, stem=true]{312}{T1}
+    \untpoint[bgcolor=1]{33}{T1}
+    % change in tone value
+    \linkuntpoints[color=1, bend=bend right]{{312}{T1}}{{33}{T1}}
+  \end{untVisualisation}
+  \caption{}
+  \label{exampleuntVisualisation}
+\end{figure}
+
+\subsection{Details}
+\subsubsection{Package Options}
+The package options can be called like in
+\ltxsyntax
+\cmditem{usepackage}
+\lstinline[mathescape]|[defaultcolors, draft, fontcmd=$\prm{font commands}$,|\newline
+\lstinline[mathescape]| contourlength=$\prm{length}$, contournumber=$\prm{integer}$]{tonevalue}|
+\endltxsyntax
+
+The effects of the options are listed below.
+\begin{optionlist}
+  \optitem[]{defaultcolors}{no value required\footnote{}}\footnotetext{`No value required' means it could be called on its own, i.e.~\opt{defaultcolors}, or with an arbitrary string passed to it, i.e.~\lstinline|defaultcolors={any string}| without affecting the result.}
+  Use the pre-defined colour scheme designed for the four-tone and the eight-tone systems (四聲八聲) and their simplifications. The colours are chosen such that the representative character taken from each of their names falls into the category of the tone it describes, and such that the \emph{yin} tone is of the same colour tone as but darker than its corresponding \emph{yang} tone in the eight-tone system. 
+  
+  The colours are programmatically named \lstinline{1} to \lstinline{8}, defined as \sty{xcolor} \textsc{html} colours. 
+  
+  {\centering
+    \showcolour{1}{蘇/蘇芳色}\quad\showcolour{3}{朽/朽葉色}\quad\showcolour{5}{熨/熨斗目花色}\quad\showcolour{7}{竹/老竹色}\\
+    \showcolour{2}{梅/紅梅色}\quad\showcolour{4}{柿/柿　色}\quad\showcolour{6}{露/露　草　色}\quad\showcolour{8}{鶸/鶸萌黄}\par
+  }
+
+  The names are taken with reference to \emph{A Dictionary of Color Combinations}\footnote{青幻舎 (Seigensha). 配色事典 (\emph{A Dictionary of Color Combinations}).}.
+
+  \optitem[]{draft}{no value required}
+  This will speed up compilations by \lstinline|\contournumber{50}| defined by \sty{contour}.
+
+  \optitem[\cmd{sffamily}]{fontcmd}{\prm{font commands}}
+  This sets the font commands to use in all graphs.
+
+  \optitem[0.075em]{contourlength}{\prm{length}}
+  This sets the width of contours around labels of tones to allow them stand out in the grid.
+
+  \optitem[1000]{contournumber}{\prm{integer}}
+  Increase this to improve contour quality; decrease to compile faster.
+\end{optionlist}
+
+\subsubsection{The \env{untVisualisation} environment}
+Use this environment to draw the axes and, optionally, labels of unt's model. Later, put the drawing commands of points and lines inside this environment.
+\ltxsyntax
+\cmditem{begin}\lstinline|{untVisualisation}|\lstinline[mathescape]|[minmax=$\prm{range of tone values}$,|\newline
+\lstinline[mathescape]|                   scale=$\prm{float}$, showlabels=$\prm{boolean}$]|
+\cmditem{untpoint}\lstinline[mathescape]|[$\prm{\cmd{untpoint} options}$]{$\prm{tone value, e.g.~3124}$}{$\prm{tone name, e.g.~上}$}|
+\cmditem{linkuntpoints}\lstinline[mathescape]|[$\prm{\cmd{linkuntpoints} options}$]{{$\prm{tone value}$}{$\prm{tone name}$}}{{$\prm{tone value}$}{$\prm{tone name}$}}|
+\cmditem{end}\lstinline|{untVisualisation}|
+\endltxsyntax
+
+A default empty \env{untVisualisation} environment looks like \cref{defaultuntVisualisation}. A modified\\\env{untVisualisation} environment looks like \cref{exampleuntVisualisation}.
+\begin{figure}[htb]
+  \centering
+  \begin{untVisualisation}[]
+    % 
+  \end{untVisualisation}
+  \caption{empty \env{untVisualisation}.}
+  \label{defaultuntVisualisation}
+\end{figure}
+
+\begin{optionlist}
+  \optitem[\{1,5\}]{minmax}{\prm{range of tone values}}
+  Sometimes we deal with languages whose tone values do not range from 1 to 5. Use this command to modify the minima and maxima of the axes.
+
+  \optitem[1]{scale}{\prm{float}}
+  Scales the grid, but not the font size, as in \cref{showlabelsuntVisualisation}.
+
+  \optitem[false]{showlabels}{\prm{boolean}}
+  Controls whether to display the labels, as in \cref{showlabelsuntVisualisation}.
+\end{optionlist}
+\begin{figure}[!h]
+  \centering
+  \begin{untVisualisation}[showlabels=true, scale=0.5]
+    % 
+  \end{untVisualisation}
+  \caption{\env{untVisualisation} with labels, and scaled to factor \lstinline|0.5|.}
+  \label{showlabelsuntVisualisation}
+\end{figure}
+
+\subsubsection{The \lstinline|\\untpoint| Command}
+Use inside the \env{untVisualisation} environment to plot tone values.
+\ltxsyntax
+\cmditem{untpoint}[list of options]{tone value, e.g.~3124}{tone name, e.g.~上}
+\endltxsyntax
+Below is a complete list of \lstinline{\untpoint} options.
+\begin{optionlist}
+  \optitem[false]{stem}{\prm{boolean}}
+  Use \lstinline{stem=true} to add a stem for turning tones.
+
+  \optitem[above]{label}{\prm{combinations of \lstinline|above, below, left, right|}}
+  For instance, use \lstinline|label=below left| to put the label (tone value) below left of the point.
+
+  \optitem[black]{bgcolor}{\prm{color}}
+  For instance, with the package option \opt{defaultcolors} on, use \lstinline|bgcolor=4| to colour the point in \textcolor{4}{the \emph{yangshang} colour}.
+
+  \optitem[0pt]{xshift}{\prm{length}}
+  When there are two different points at the same coordinates, use this option to slightly shift the points horizontally, e.g.~\lstinline|xshift=0.8em|.
+
+  \optitem[0pt]{yshift}{\prm{length}}
+  The vertical variant of \opt{xshift}.
+
+  \optitem[1]{scale}{\prm{float}}
+  Scales the size of the point.
+
+  \optitem[\{\}]{tikzoptions}{\prm{\sty{tikz} options not in the key-value format} \emph{\textcolor{spot}{Unstable (this might clash with the options required to plot the point). Use at risk.}}}
+  For instance, use \lstinline|tikzoptions={black}| to make the point completely black (the name of the tone becomes invisible), but preserving the size of the point which fits to the invisible name of the tone.
+\end{optionlist}
+
+\subsubsection{The \lstinline|\\linkuntpoints| Command}
+It must be called after the points involved are drawn.
+\ltxsyntax
+\cmditem{linkuntpoints}[list of options]\lstinline|{{tone value 1}{tone name 1}}{{tone value 2}{tone name 2}}|
+\endltxsyntax
+Below is a complete list of \lstinline{\linkuntpoints} options.
+\begin{optionlist}
+  \optitem[black]{color}{\prm{color}}
+  Colours the connecting line.
+
+  \optitem[\{\}]{bend}{\prm{bend direction}}
+  Set \lstinline{bend=bend left} or \lstinline{bend=bend right} to bend the line.
+\end{optionlist}
+
+\subsection{A More Complicated Example}
+Shifts in the tone value pattern of Shanghainese in the past 150 years (\cref{shanghaineseexample})\footnote{unt. Ibid.},
+\begin{figure}[!htb]
+  \centering
+  \begin{untVisualisation}[showlabels=true]
+    % 1
+    \untpoint[bgcolor=1]{53}{平}
+    \untpoint[bgcolor=1]{51}{平}
+    % 2
+    \untpoint[bgcolor=2, label=right, xshift=0.8em]{11}{平}
+    % 3
+    \untpoint[bgcolor=3, xshift=-0.8em]{55}{上}
+    \untpoint[bgcolor=3, label=left]{44}{上}
+    % 4
+    \untpoint[bgcolor=4, label=below]{113}{上}
+    % 5
+    \untpoint[bgcolor=5]{35}{去}
+    \untpoint[bgcolor=5, label=below]{34}{去}
+    \untpoint[bgcolor=5]{445}{去}
+    % 6
+    \untpoint[bgcolor=6]{13}{去}
+    % 7
+    \untpoint[bgcolor=7, xshift=0.8em]{5}{入}
+    % 8
+    \untpoint[bgcolor=8, label=left, xshift=-0.8em]{1}{入}
+    \untpoint[bgcolor=8]{23}{入}
+    % 
+    \linkuntpoints[color=1]{{53}{平}}{{51}{平}}
+    \linkuntpoints[color=3]{{55}{上}}{{44}{上}}
+    \linkuntpoints[color=3]{{44}{上}}{{34}{去}}
+    \linkuntpoints[color=4]{{113}{上}}{{13}{去}}
+    \linkuntpoints[color=5]{{35}{去}}{{34}{去}}
+    \linkuntpoints[color=5]{{34}{去}}{{445}{去}}
+    \linkuntpoints[color=2]{{11}{平}}{{13}{去}}
+    \linkuntpoints[color=8]{{1}{入}}{{23}{入}}
+    % 
+  \end{untVisualisation}
+  \caption{shifts in the tone value pattern of Shanghainese in the past 150 years.}
+  \label{shanghaineseexample}
+\end{figure}
+drawn with the following code, compiled with \XeLaTeX{}.
+\begin{lstlisting}[caption={example regarding Shanghainese.}]
+% !TEX program = xelatex
+
+\documentclass{ctexart}
+
+\usepackage[defaultcolors]{tonevalue}
+
+\begin{document}
+
+\begin{untVisualisation}[showlabels=true]
+  % 1
+  \untpoint[bgcolor=1]{53}{平}
+  \untpoint[bgcolor=1]{51}{平}
+  % 2
+  \untpoint[bgcolor=2, label=right, xshift=0.8em]{11}{平}
+  % 3
+  \untpoint[bgcolor=3, xshift=-0.8em]{55}{上}
+  \untpoint[bgcolor=3, label=left]{44}{上}
+  % 4
+  \untpoint[bgcolor=4, label=below]{113}{上}
+  % 5
+  \untpoint[bgcolor=5]{35}{去}
+  \untpoint[bgcolor=5, label=below]{34}{去}
+  \untpoint[bgcolor=5]{445}{去}
+  % 6
+  \untpoint[bgcolor=6]{13}{去}
+  % 7
+  \untpoint[bgcolor=7, xshift=0.8em]{5}{入}
+  % 8
+  \untpoint[bgcolor=8, label=left, xshift=-0.8em]{1}{入}
+  \untpoint[bgcolor=8]{23}{入}
+  % 
+  \linkuntpoints[color=1]{{53}{平}}{{51}{平}}
+  \linkuntpoints[color=3]{{55}{上}}{{44}{上}}
+  \linkuntpoints[color=3]{{44}{上}}{{34}{去}}
+  \linkuntpoints[color=4]{{113}{上}}{{13}{去}}
+  \linkuntpoints[color=5]{{35}{去}}{{34}{去}}
+  \linkuntpoints[color=5]{{34}{去}}{{445}{去}}
+  \linkuntpoints[color=2]{{11}{平}}{{13}{去}}
+  \linkuntpoints[color=8]{{1}{入}}{{23}{入}}
+  % 
+\end{untVisualisation}
+
+\end{document}  
+\end{lstlisting}
+
+\section{Implementation}
+\lstinputlisting[caption={the implementation.}]{tonevalue.sty}
+
+\end{document}
